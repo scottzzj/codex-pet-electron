@@ -279,15 +279,10 @@ button {
 }
 
 .tray-item:hover,
-.tray-item:focus-visible,
-.tray-item.is-expanded {
+.tray-item:focus-visible {
   border-color: rgba(46, 52, 64, 0.14);
   box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
   outline: none;
-}
-
-.tray-item-empty {
-  border-style: dashed;
 }
 
 .tray-item.state-review {
@@ -311,13 +306,6 @@ button {
   color: #17202d;
 }
 
-.tray-item-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .tray-item-body {
   margin-top: 4px;
   color: #58667b;
@@ -326,42 +314,6 @@ button {
   min-height: 32px;
   max-height: 32px;
   overflow: hidden;
-}
-
-.tray-item.is-expanded .tray-item-body {
-  max-height: 512px;
-}
-
-.tray-item-toggle {
-  flex: 0 0 auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #58667b;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.2;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateX(4px);
-  transition:
-    opacity 140ms ease,
-    transform 140ms ease,
-    color 140ms ease;
-}
-
-.tray-item:hover .tray-item-toggle,
-.tray-item:focus-visible .tray-item-toggle,
-.tray-item.is-expanded .tray-item-toggle,
-.tray-item-toggle:focus-visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.tray-item-toggle:hover,
-.tray-item-toggle:focus-visible {
-  color: #17202d;
-  outline: none;
 }
 
 .tray-item-meta {

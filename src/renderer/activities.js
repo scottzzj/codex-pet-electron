@@ -112,8 +112,7 @@
 
     function syncLatestBar() {
       const isAtLatest = elements.activityList.scrollTop <= constants.SCROLL_EDGE_TOLERANCE;
-      petState.showLatestButton = petState.trayOpen && !isAtLatest;
-      elements.latestBar.classList.toggle("hidden", !petState.showLatestButton);
+      elements.latestBar.classList.toggle("hidden", !petState.trayOpen || isAtLatest);
     }
 
     function scheduleOverflowMeasurement() {

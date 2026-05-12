@@ -87,9 +87,6 @@ contextBridge.exposeInMainWorld("petBridge", {
   showContextMenu: function (payload) {
     return ipcRenderer.invoke("pet:showContextMenu", payload);
   },
-  setBounds: function (bounds) {
-    ipcRenderer.send("pet:setBounds", bounds);
-  },
   setPosition: function (position) {
     ipcRenderer.send("pet:setPosition", position);
   },

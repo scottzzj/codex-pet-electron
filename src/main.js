@@ -416,42 +416,6 @@ ipcMain.handle("pet:showContextMenu", function (_event, payload) {
   return true;
 });
 
-ipcMain.on("pet:setBounds", function (_event, bounds) {
-  if (!petWindow || petWindow.isDestroyed()) {
-    return;
-  }
-
-  if (!bounds || !isFiniteNumber(bounds.x) || !isFiniteNumber(bounds.y)) {
-    return;
-  }
-
-  const targetHeight = Math.round(bounds.height || COLLAPSED_WINDOW_HEIGHT);
-  const display = screen.getDisplayNearestPoint({
-    x: Math.round(bounds.x),
-    y: Math.round(bounds.y)
-  });
-  const clamped = clampWindowRectToDisplay(
-    {
-      x: Math.round(bounds.x),
-      y: Math.round(bounds.y)
-    },
-    display.workArea,
-    WINDOW_WIDTH,
-    targetHeight
-  );
-
-  petWindow.setBounds({
-    x: clamped.x,
-    y: clamped.y,
-    width: WINDOW_WIDTH,
-    height: targetHeight
-  });
-
-  if (focusDetailWindow && !focusDetailWindow.isDestroyed()) {
-    syncFocusDetailPosition();
-  }
-});
-
 ipcMain.on("pet:setPosition", function (_event, position) {
   if (!petWindow || petWindow.isDestroyed()) {
     return;

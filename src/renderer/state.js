@@ -24,9 +24,6 @@
       reducedMotion: false,
       drag: null,
       hovering: false,
-      expandedActivityId: null,
-      measuredOverflowById: {},
-      showLatestButton: false,
       activities: [],
       visibleActivities: [],
       lastActivitiesMarkup: "",
@@ -36,7 +33,6 @@
       focusSoundDataUrl: null,
       focusDetailOpen: false,
       lastAnimationKey: "",
-      codexState: null,
       selectedPet: null,
       windowBounds: null,
       focus: {

@@ -47,14 +47,6 @@ body {
   gap: 12px;
 }
 
-.focus-detail-eyebrow {
-  color: #6a7689;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 .focus-detail-title {
   color: #17202d;
   font-size: 18px;
