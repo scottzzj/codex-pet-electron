@@ -13,6 +13,10 @@
 
 当前项目已经完成从“大单文件原型”到“按职责拆分模块”的重构，适合继续扩展。
 
+## 项目效果
+<img width="203" height="229" alt="image" src="https://github.com/user-attachments/assets/aa8ee559-b1eb-4e27-8604-6205ea67cef1" />
+<img width="853" height="450" alt="image" src="https://github.com/user-attachments/assets/97597418-f5d7-45da-b234-bf22114d80ea" />
+
 ## 当前功能
 
 ### 桌宠主窗
