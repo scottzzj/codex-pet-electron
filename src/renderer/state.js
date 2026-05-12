@@ -29,6 +29,7 @@
       showLatestButton: false,
       activities: [],
       visibleActivities: [],
+      lastActivitiesMarkup: "",
       animationTimer: null,
       hoverTimer: null,
       refreshTimer: null,
