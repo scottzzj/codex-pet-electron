@@ -18,7 +18,7 @@
     DRAG_THRESHOLD: 8,
     WINDOW_WIDTH: 356,
     WINDOW_HEIGHT: 320,
-    REFRESH_INTERVAL_MS: 250,
+    REFRESH_INTERVAL_MS: 1000,
     COLLAPSED_BODY_HEIGHT: 32,
     SCROLL_EDGE_TOLERANCE: 2,
     FOCUS_MAX_PAUSES: 3,
@@ -46,15 +46,15 @@
       review: makeRow(8, 6, 150, 280)
     },
     statusCopy: {
-      idle: "Waiting",
-      running: "Running",
-      review: "Ready",
-      failed: "Blocked",
-      waiting: "Needs input",
-      "running-left": "Running",
-      "running-right": "Running",
-      waving: "Ready",
-      jumping: "Running"
+      idle: "等待中",
+      running: "进行中",
+      review: "可查看",
+      failed: "已阻塞",
+      waiting: "待处理",
+      "running-left": "进行中",
+      "running-right": "进行中",
+      waving: "可查看",
+      jumping: "进行中"
     },
     badgeThemeByState: {
       running: { bg: "#2f3f59", fg: "#f7fbff" },
@@ -82,9 +82,9 @@
     },
     baseActivity: {
       id: "conversation",
-      title: "Current conversation",
-      body: "Pet overlay is attached to the current local conversation and mirrors a single active session.",
-      source: "Local session",
+      title: "当前会话",
+      body: "桌宠当前绑定到本地会话，会同步展示这一条活跃会话的状态。",
+      source: "本地会话",
       state: "running"
     }
   };

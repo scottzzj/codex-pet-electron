@@ -18,6 +18,7 @@
         return;
       }
 
+      window.clearTimeout(petState.hoverTimer);
       petState.drag = {
         pointerId: event.pointerId,
         startClientX: event.clientX,
@@ -45,6 +46,7 @@
 
       const cachedBounds = petState.windowBounds;
       if (!event.altKey) {
+        window.clearTimeout(petState.hoverTimer);
         petState.state = "jumping";
         petState.lastAnimationKey = "";
         render();
@@ -140,6 +142,9 @@
       }
       window.clearTimeout(petState.hoverTimer);
       petState.hoverTimer = window.setTimeout(function () {
+        if (petState.drag) {
+          return;
+        }
         petState.state = "waving";
         petState.lastAnimationKey = "";
         render();

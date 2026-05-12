@@ -44,15 +44,15 @@
 
     function getFocusStatusText() {
       if (petState.focus.status === "running") {
-        return "Focus running";
+        return "专注中";
       }
       if (petState.focus.status === "paused") {
-        return "Focus paused";
+        return "已暂停";
       }
       if (petState.focus.status === "completed") {
-        return "Focus completed";
+        return "已完成";
       }
-      return "Waiting";
+      return "等待中";
     }
 
     function getFocusActivity() {
@@ -66,9 +66,9 @@
       if (petState.focus.status === "completed") {
         return {
           id: "focus-session",
-          title: "Focus completed",
-          body: "Focus session finished. Open detail to start another round or stop the session.",
-          source: "TickTick style",
+          title: "专注已完成",
+          body: "本轮专注已经结束，可以打开详情再次开始，或者直接结束本次专注。",
+          source: "专注计时",
           state: "review",
           updatedAtMs: petState.focus.completedAtMs || now
         };
@@ -76,9 +76,9 @@
 
       return {
         id: "focus-session",
-        title: petState.focus.status === "paused" ? "Focus paused" : "Focus in progress",
-        body: "Remaining " + remainingText + ". Pauses used " + petState.focus.pauseCount + "/" + constants.FOCUS_MAX_PAUSES + ".",
-        source: "TickTick style",
+        title: petState.focus.status === "paused" ? "专注已暂停" : "专注进行中",
+        body: "剩余 " + remainingText + "，已暂停 " + petState.focus.pauseCount + "/" + constants.FOCUS_MAX_PAUSES + " 次。",
+        source: "专注计时",
         state: petState.focus.status === "paused" ? "waiting" : "running",
         updatedAtMs: now
       };
@@ -224,6 +224,10 @@
     }
 
     function handleDetailAction(payload) {
+      if (!payload || !payload.id) {
+        return;
+      }
+
       if (payload.id === "focus-pause") {
         pauseFocus();
       } else if (payload.id === "focus-resume") {

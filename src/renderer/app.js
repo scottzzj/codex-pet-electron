@@ -51,6 +51,20 @@
     toggleTray: toggleTray
   });
 
+  const reducedMotionQuery = typeof window.matchMedia === "function"
+    ? window.matchMedia("(prefers-reduced-motion: reduce)")
+    : null;
+
+  function applyReducedMotionPreference(prefersReducedMotion) {
+    if (petState.reducedMotion === prefersReducedMotion) {
+      return;
+    }
+
+    petState.reducedMotion = prefersReducedMotion;
+    petState.lastAnimationKey = "";
+    render();
+  }
+
   function rebuildActivities() {
     const activities = [];
     const focusActivity = focusModule.getFocusActivity();
@@ -169,6 +183,19 @@
 
   interactionModule.bindEvents();
 
+  if (reducedMotionQuery) {
+    petState.reducedMotion = reducedMotionQuery.matches;
+    if (typeof reducedMotionQuery.addEventListener === "function") {
+      reducedMotionQuery.addEventListener("change", function (event) {
+        applyReducedMotionPreference(event.matches);
+      });
+    } else if (typeof reducedMotionQuery.addListener === "function") {
+      reducedMotionQuery.addListener(function (event) {
+        applyReducedMotionPreference(event.matches);
+      });
+    }
+  }
+
   petBridge.onMenuAction(function (payload) {
     menuModule.handleMenuAction(payload);
   });
@@ -180,6 +207,19 @@
   petBridge.onWindowBoundsChanged(function (bounds) {
     if (bounds) {
       petState.windowBounds = bounds;
+    }
+  });
+
+  petBridge.onNativeDragState(function (payload) {
+    if (!payload || payload.dragging) {
+      return;
+    }
+
+    petState.drag = null;
+    if (!petState.hovering) {
+      petState.state = petState.baseState;
+      petState.lastAnimationKey = "";
+      render();
     }
   });
 

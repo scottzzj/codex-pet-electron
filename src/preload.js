@@ -2,31 +2,64 @@ const { contextBridge, ipcRenderer } = require("electron");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
+const fsp = fs.promises;
 
-function readCodexGlobalState() {
+async function readCodexGlobalState() {
   try {
     const statePath = path.join(os.homedir(), ".codex", ".codex-global-state.json");
-    const raw = fs.readFileSync(statePath, "utf8");
+    const raw = await fsp.readFile(statePath, "utf8");
     return JSON.parse(raw);
   } catch (_error) {
     return null;
   }
 }
 
-function readSelectedPet() {
+async function resolvePathInsideRoot(rootDir, targetPath) {
+  const rootRealPath = await fsp.realpath(rootDir);
+  const targetRealPath = await fsp.realpath(targetPath);
+  const relativePath = path.relative(rootRealPath, targetRealPath);
+
+  if (
+    relativePath.startsWith("..") ||
+    path.isAbsolute(relativePath)
+  ) {
+    return null;
+  }
+
+  return targetRealPath;
+}
+
+async function readSelectedPet() {
   try {
-    const globalState = readCodexGlobalState();
+    const globalState = await readCodexGlobalState();
     const selectedAvatarId = globalState?.["electron-persisted-atom-state"]?.["selected-avatar-id"];
     if (!selectedAvatarId || !selectedAvatarId.startsWith("custom:")) {
       return null;
     }
 
     const petId = selectedAvatarId.slice("custom:".length);
-    const petDir = path.join(os.homedir(), ".codex", "pets", petId);
-    const petJsonPath = path.join(petDir, "pet.json");
-    const petJson = JSON.parse(fs.readFileSync(petJsonPath, "utf8"));
-    const spritePath = path.join(petDir, petJson.spritesheetPath || "spritesheet.webp");
-    const spriteBuffer = fs.readFileSync(spritePath);
+    const petsRootDir = path.join(os.homedir(), ".codex", "pets");
+    const unresolvedPetDir = path.resolve(petsRootDir, petId);
+    const petDir = await resolvePathInsideRoot(petsRootDir, unresolvedPetDir);
+    if (!petDir) {
+      return null;
+    }
+
+    const petJsonPath = await resolvePathInsideRoot(petDir, path.join(petDir, "pet.json"));
+    if (!petJsonPath) {
+      return null;
+    }
+
+    const petJson = JSON.parse(await fsp.readFile(petJsonPath, "utf8"));
+    const spriteFileName = typeof petJson.spritesheetPath === "string"
+      ? petJson.spritesheetPath
+      : "spritesheet.webp";
+    const spritePath = await resolvePathInsideRoot(petDir, path.resolve(petDir, spriteFileName));
+    if (!spritePath) {
+      return null;
+    }
+
+    const spriteBuffer = await fsp.readFile(spritePath);
     const spriteExt = path.extname(spritePath).slice(1) || "webp";
 
     return {
@@ -40,10 +73,10 @@ function readSelectedPet() {
   }
 }
 
-function readFocusSound() {
+async function readFocusSound() {
   try {
     const preferredPath = "D:\\TickTick\\pomo.wav";
-    const soundBuffer = fs.readFileSync(preferredPath);
+    const soundBuffer = await fsp.readFile(preferredPath);
     return "data:audio/wav;base64," + soundBuffer.toString("base64");
   } catch (_error) {
     return null;
@@ -119,6 +152,16 @@ contextBridge.exposeInMainWorld("petBridge", {
     ipcRenderer.on("pet-window-bounds-changed", listener);
     return function () {
       ipcRenderer.removeListener("pet-window-bounds-changed", listener);
+    };
+  },
+  onNativeDragState: function (handler) {
+    const listener = function (_event, payload) {
+      handler(payload);
+    };
+
+    ipcRenderer.on("pet-native-drag-state", listener);
+    return function () {
+      ipcRenderer.removeListener("pet-native-drag-state", listener);
     };
   },
   sendFocusDetailAction: function (payload) {

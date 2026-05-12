@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Codex Pet Replica</title>
+  <title>Codex 宠物</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -11,11 +11,11 @@
     <div class="avatar-overlay-tray hidden" id="activity-tray">
       <div class="tray-panel">
         <div class="tray-panel-header">
-          <span class="tray-panel-title">Latest activity</span>
-          <button type="button" class="tray-icon-button" id="tray-toggle" aria-label="Collapse activity">-</button>
+          <span class="tray-panel-title">最新动态</span>
+          <button type="button" class="tray-icon-button" id="tray-toggle" aria-label="收起动态">-</button>
         </div>
         <div class="tray-latest-bar hidden" id="tray-latest-bar">
-          <button type="button" class="tray-latest-button" id="tray-latest-button">Latest</button>
+          <button type="button" class="tray-latest-button" id="tray-latest-button">回到最新</button>
         </div>
         <div class="tray-list" id="activity-list"></div>
       </div>
@@ -28,12 +28,12 @@
             type="button"
             class="avatar-badge"
             id="pet-badge"
-            aria-label="Open activity tray"
+            aria-label="打开动态面板"
           >3</button>
 
-          <div class="avatar-status-chip" id="status-chip">Waiting</div>
+          <div class="avatar-status-chip" id="status-chip">等待中</div>
 
-          <div class="avatar-shell" id="pet" tabindex="0" role="img" aria-label="Codex pet">
+          <div class="avatar-shell" id="pet" tabindex="0" role="img" aria-label="Codex 宠物">
             <div class="codex-avatar-root" id="pet-sprite"></div>
           </div>
         </div>

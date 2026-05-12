@@ -2,43 +2,75 @@
   const elements = {
     title: document.getElementById("focus-title"),
     timer: document.getElementById("focus-timer"),
+    status: document.getElementById("focus-status"),
     actions: document.getElementById("focus-actions"),
     close: document.getElementById("focus-close")
   };
 
   let detailState = null;
+
+  function createActionButton(options) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = options.secondary
+      ? "focus-detail-action secondary"
+      : "focus-detail-action";
+    button.textContent = options.label;
+
+    if (options.action) {
+      button.setAttribute("data-action", options.action);
+    }
+    if (options.disabled) {
+      button.disabled = true;
+    }
+
+    return button;
+  }
+
   function renderActions() {
+    elements.actions.replaceChildren();
+
     if (!detailState) {
-      elements.actions.innerHTML = "";
       return;
     }
 
     if (detailState.status === "running") {
-      elements.actions.innerHTML = [
-        detailState.canPause
-          ? '<button type="button" class="focus-detail-action secondary" data-action="focus-pause">暂停</button>'
-          : '<button type="button" class="focus-detail-action secondary" disabled>暂停次数已用完</button>',
-        '<button type="button" class="focus-detail-action" data-action="focus-stop">结束</button>'
-      ].join("");
+      elements.actions.append(
+        createActionButton({
+          label: detailState.canPause ? "暂停" : "暂停次数已用完",
+          action: detailState.canPause ? "focus-pause" : "",
+          secondary: true,
+          disabled: !detailState.canPause
+        }),
+        createActionButton({
+          label: "结束",
+          action: "focus-stop"
+        })
+      );
       return;
     }
 
     if (detailState.status === "paused") {
-      elements.actions.innerHTML = [
-        '<button type="button" class="focus-detail-action secondary" data-action="focus-resume">继续</button>',
-        '<button type="button" class="focus-detail-action" data-action="focus-stop">结束</button>'
-      ].join("");
+      elements.actions.append(
+        createActionButton({
+          label: "继续",
+          action: "focus-resume",
+          secondary: true
+        }),
+        createActionButton({
+          label: "结束",
+          action: "focus-stop"
+        })
+      );
       return;
     }
 
     if (detailState.status === "completed") {
-      elements.actions.innerHTML = [
-        '<button type="button" class="focus-detail-action" data-action="focus-stop">关闭</button>'
-      ].join("");
-      return;
+      elements.actions.append(createActionButton({
+        label: "关闭",
+        action: "focus-stop"
+      }));
     }
-
-    elements.actions.innerHTML = "";
   }
 
   function render() {
@@ -48,6 +80,7 @@
 
     elements.title.textContent = detailState.title || "专注计时";
     elements.timer.textContent = detailState.timerText || "00:00";
+    elements.status.textContent = detailState.statusText || "未开始";
     renderActions();
   }
 

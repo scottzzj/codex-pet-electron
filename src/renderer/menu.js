@@ -46,6 +46,10 @@
     }
 
     function handleMenuAction(payload) {
+      if (!payload || !payload.id) {
+        return;
+      }
+
       if (payload.id === "toggle-tray") {
         onToggleTray();
       } else if (payload.id.indexOf("focus-start-") === 0) {

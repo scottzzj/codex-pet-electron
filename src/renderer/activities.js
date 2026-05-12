@@ -71,11 +71,14 @@
 
     function renderActivities() {
       if (petState.visibleActivities.length === 0) {
-        elements.activityList.innerHTML = "";
+        if (petState.lastActivitiesMarkup !== "") {
+          petState.lastActivitiesMarkup = "";
+          elements.activityList.innerHTML = "";
+        }
         return;
       }
 
-      elements.activityList.innerHTML = petState.visibleActivities.map(function (activity) {
+      const nextMarkup = petState.visibleActivities.map(function (activity) {
         return [
           '<article class="tray-item state-', escapeHtml(normalizeStatus(activity.state)), '">',
           '<div class="tray-item-title">', escapeHtml(activity.title), "</div>",
@@ -90,6 +93,13 @@
           "</article>"
         ].join("");
       }).join("");
+
+      if (nextMarkup === petState.lastActivitiesMarkup) {
+        return;
+      }
+
+      petState.lastActivitiesMarkup = nextMarkup;
+      elements.activityList.innerHTML = nextMarkup;
     }
 
     function syncActivityState() {
@@ -113,13 +123,16 @@
     }
 
     function ensureBodyObserver() {
-      if (bodyResizeObserver) {
-        bodyResizeObserver.disconnect();
-      }
       if (typeof ResizeObserver === "undefined") {
         return;
       }
-      bodyResizeObserver = new ResizeObserver(scheduleOverflowMeasurement);
+
+      if (!bodyResizeObserver) {
+        bodyResizeObserver = new ResizeObserver(scheduleOverflowMeasurement);
+      } else {
+        bodyResizeObserver.disconnect();
+      }
+
       elements.activityList.querySelectorAll("[data-activity-body]").forEach(function (bodyElement) {
         bodyResizeObserver.observe(bodyElement);
       });

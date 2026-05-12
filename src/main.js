@@ -145,9 +145,16 @@ function createPetWindow() {
 
   petWindow.hookWindowMessage(WM_ENTERSIZEMOVE, function () {
     nativeDragState.entered = true;
+    if (petWindow && !petWindow.isDestroyed()) {
+      petWindow.webContents.send("pet-native-drag-state", { dragging: true });
+    }
   });
   petWindow.hookWindowMessage(WM_EXITSIZEMOVE, function () {
     nativeDragState.exited = true;
+    if (petWindow && !petWindow.isDestroyed()) {
+      petWindow.webContents.send("pet-native-drag-state", { dragging: false });
+      petWindow.webContents.send("pet-window-bounds-changed", petWindow.getBounds());
+    }
   });
 
   petWindow.on("closed", function () {
@@ -183,6 +190,44 @@ function mapMenuItem(item) {
 
 function buildPetMenu(items) {
   return Menu.buildFromTemplate(items.map(mapMenuItem));
+}
+
+function isFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function sanitizeContextMenuItems(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.reduce(function (result, item) {
+    if (!item || typeof item !== "object") {
+      return result;
+    }
+
+    if (item.type === "separator") {
+      result.push({ type: "separator" });
+      return result;
+    }
+
+    if (typeof item.id !== "string" || typeof item.label !== "string") {
+      return result;
+    }
+
+    const sanitized = {
+      id: item.id,
+      label: item.label,
+      enabled: item.enabled !== false
+    };
+
+    if (Array.isArray(item.submenu) && item.submenu.length > 0) {
+      sanitized.submenu = sanitizeContextMenuItems(item.submenu);
+    }
+
+    result.push(sanitized);
+    return result;
+  }, []);
 }
 
 function resolveFocusDetailBounds() {
@@ -353,16 +398,30 @@ app.on("window-all-closed", function () {
 });
 
 ipcMain.handle("pet:showContextMenu", function (_event, payload) {
-  const menu = buildPetMenu(payload.items || []);
+  if (!petWindow || petWindow.isDestroyed()) {
+    return false;
+  }
+
+  const items = sanitizeContextMenuItems(payload && payload.items);
+  if (items.length === 0) {
+    return false;
+  }
+
+  const menu = buildPetMenu(items);
   menu.popup({
     window: petWindow,
-    x: payload.x,
-    y: payload.y
+    x: isFiniteNumber(payload && payload.x) ? Math.round(payload.x) : undefined,
+    y: isFiniteNumber(payload && payload.y) ? Math.round(payload.y) : undefined
   });
+  return true;
 });
 
 ipcMain.on("pet:setBounds", function (_event, bounds) {
   if (!petWindow || petWindow.isDestroyed()) {
+    return;
+  }
+
+  if (!bounds || !isFiniteNumber(bounds.x) || !isFiniteNumber(bounds.y)) {
     return;
   }
 
@@ -395,6 +454,10 @@ ipcMain.on("pet:setBounds", function (_event, bounds) {
 
 ipcMain.on("pet:setPosition", function (_event, position) {
   if (!petWindow || petWindow.isDestroyed()) {
+    return;
+  }
+
+  if (!position || !isFiniteNumber(position.x) || !isFiniteNumber(position.y)) {
     return;
   }
 
@@ -433,13 +496,23 @@ ipcMain.handle("pet:setExpanded", function (_event, payload) {
   }
 
   const currentBounds = petWindow.getBounds();
-  const targetHeight = payload && payload.expanded
+  const targetHeight = payload && payload.expanded === true
     ? EXPANDED_WINDOW_HEIGHT
     : COLLAPSED_WINDOW_HEIGHT;
+  const display = screen.getDisplayMatching(currentBounds);
+  const clamped = clampWindowRectToDisplay(
+    {
+      x: currentBounds.x,
+      y: currentBounds.y
+    },
+    display.workArea,
+    WINDOW_WIDTH,
+    targetHeight
+  );
 
   petWindow.setBounds({
-    x: currentBounds.x,
-    y: currentBounds.y,
+    x: clamped.x,
+    y: clamped.y,
     width: WINDOW_WIDTH,
     height: targetHeight
   });
@@ -456,6 +529,10 @@ ipcMain.handle("focus:openDetail", function (_event, payload) {
 });
 
 ipcMain.handle("focus:updateDetail", function (_event, payload) {
+  if (!payload || typeof payload !== "object") {
+    return focusDetailState;
+  }
+
   focusDetailState = payload;
   syncFocusDetailState();
   return focusDetailState;
