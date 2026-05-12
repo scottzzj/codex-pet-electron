@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Codex Pet Replica</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <section class="avatar-overlay">
+    <div class="avatar-overlay-tray hidden" id="activity-tray">
+      <div class="tray-panel">
+        <div class="tray-panel-header">
+          <span class="tray-panel-title">Latest activity</span>
+          <button type="button" class="tray-icon-button" id="tray-toggle" aria-label="Collapse activity">-</button>
+        </div>
+        <div class="tray-latest-bar hidden" id="tray-latest-bar">
+          <button type="button" class="tray-latest-button" id="tray-latest-button">Latest</button>
+        </div>
+        <div class="tray-list" id="activity-list"></div>
+      </div>
+    </div>
+
+    <main class="avatar-overlay-stage">
+      <section class="avatar-overlay-content" id="pet-anchor">
+        <div class="avatar-hit-region">
+          <button
+            type="button"
+            class="avatar-badge"
+            id="pet-badge"
+            aria-label="Open activity tray"
+          >3</button>
+
+          <div class="avatar-status-chip" id="status-chip">Waiting</div>
+
+          <div class="avatar-shell" id="pet" tabindex="0" role="img" aria-label="Codex pet">
+            <div class="codex-avatar-root" id="pet-sprite"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <script src="./constants.js"></script>
+  <script src="./state.js"></script>
+  <script src="./animation.js"></script>
+  <script src="./activities.js"></script>
+  <script src="./focus.js"></script>
+  <script src="./menu.js"></script>
+  <script src="./interactions.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+*.log
+*.tmp
+*.bak
+
+current-*.png
+debug-capture.png
+ticktick-screen.png
+verify-screen-1.png
+focus-desktop-reference.png
+
+.DS_Store
+Thumbs.db

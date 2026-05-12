@@ -1,0 +1,19 @@
+{
+  "name": "codex-pet-electron",
+  "version": "0.1.0",
+  "description": "Standalone desktop pet inspired by Codex Pet",
+  "main": "src/main.js",
+  "author": "OpenAI Codex",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "package": "electron-packager . CodexPetReplica --platform=win32 --arch=x64 --out=dist --overwrite --prune=true"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "koffi": "^2.16.2"
+  }
+}
