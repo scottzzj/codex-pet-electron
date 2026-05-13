@@ -263,13 +263,22 @@ codex-pet-electron/
 
 ### TickTick 提示音
 
-当前优先读取：
+项目会优先读取用户手动选择的提示音文件。
+
+如果没有手动选择，则会继续读取项目内置默认提示音目录：
 
 ```text
-D:\TickTick\pomo.wav
+assets/sounds/
 ```
 
-如果文件不存在，则使用浏览器 AudioContext 生成简单提示音兜底。
+支持的默认文件名包括：
+
+- `focus-default.wav`
+- `focus-default.mp3`
+- `focus-default.ogg`
+- `focus-default.m4a`
+
+如果没有可用音频文件，则使用浏览器 AudioContext 生成简单提示音兜底。
 
 ## 运行环境
 
@@ -299,6 +308,12 @@ npm.cmd start
 npm.cmd run package
 ```
 
+如果你要发布给别人使用，推荐直接生成文件夹压缩包：
+
+```powershell
+npm.cmd run package:zip
+```
+
 `package.json` 中当前打包命令如下：
 
 ```powershell
@@ -311,15 +326,17 @@ electron-packager . CodexPetReplica --platform=win32 --arch=x64 --out=dist --ove
 dist/CodexPetReplica-win32-x64/CodexPetReplica.exe
 ```
 
+打包后的压缩包默认位于：
+
+```text
+dist/CodexPetReplica-win32-x64.zip
+```
+
 ## Git 与发布
 
 当前 GitHub 仓库：
 
 - [https://github.com/scottzzj/codex-pet-electron](https://github.com/scottzzj/codex-pet-electron)
-
-当前首个 release：
-
-- [v0.1.0](https://github.com/scottzzj/codex-pet-electron/releases/tag/v0.1.0)
 
 推荐发布流程：
 
@@ -329,7 +346,7 @@ dist/CodexPetReplica-win32-x64/CodexPetReplica.exe
 4. 提交代码并推送
 5. 创建对应 tag
 6. 创建 GitHub Release
-7. 上传 `.exe` 产物
+7. 优先上传 `CodexPetReplica-win32-x64.zip` 压缩包
 
 ## 当前已知限制
 

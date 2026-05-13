@@ -7,7 +7,8 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "package": "electron-packager . CodexPetReplica --platform=win32 --arch=x64 --out=dist --overwrite --prune=true"
+    "package": "electron-packager . CodexPetReplica --platform=win32 --arch=x64 --out=dist --overwrite --prune=true",
+    "package:zip": "npm.cmd run package && node scripts/package-zip.js"
   },
   "devDependencies": {
     "electron": "^31.7.7",
