@@ -1,0 +1,26 @@
+html,
+body {
+  overflow: auto;
+  background: #ffffff;
+}
+
+body {
+  min-width: 356px;
+  min-height: 320px;
+  -webkit-app-region: no-drag;
+}
+
+.avatar-preview-shell {
+  width: 356px;
+  height: 320px;
+}
+
+.avatar-overlay {
+  width: 356px;
+  height: 320px;
+}
+
+.avatar-overlay-stage {
+  width: 356px;
+  height: 320px;
+}
