@@ -78,13 +78,6 @@ body {
   text-align: center;
 }
 
-.focus-detail-status {
-  margin-top: 8px;
-  color: #5f6b7f;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .focus-detail-actions {
   display: flex;
   gap: 8px;

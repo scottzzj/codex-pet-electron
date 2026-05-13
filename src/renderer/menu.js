@@ -6,6 +6,7 @@
     const petBridge = options.petBridge;
     const petState = options.petState;
     const onClosePet = options.onClosePet;
+    const onChangeFocusSound = options.onChangeFocusSound;
     const onOpenFocusDetail = options.onOpenFocusDetail;
     const onStartFocus = options.onStartFocus;
     const onToggleTray = options.onToggleTray;
@@ -29,6 +30,14 @@
         items.push({ id: "focus-detail-open", label: "专注详情" });
       }
 
+      items.push({ type: "separator" });
+      items.push({
+        id: "focus-sound-root",
+        label: "提示音",
+        submenu: [
+          { id: "focus-sound-change", label: "修改提示音" }
+        ]
+      });
       items.push({ type: "separator" });
       items.push({ id: "toggle-tray", label: petState.trayOpen ? "收起动态" : "打开动态" });
       items.push({ id: "close-pet", label: "关闭宠物" });
@@ -56,6 +65,8 @@
         onStartFocus(Number(payload.id.replace("focus-start-", "")));
       } else if (payload.id === "focus-detail-open") {
         onOpenFocusDetail();
+      } else if (payload.id === "focus-sound-change") {
+        onChangeFocusSound();
       } else if (payload.id === "close-pet") {
         onClosePet();
       }

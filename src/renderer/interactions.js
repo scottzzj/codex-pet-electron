@@ -35,6 +35,7 @@
         width: bounds.width,
         height: bounds.height
       };
+      petBridge.setDraggingState({ dragging: true });
       elements.pet.setPointerCapture(event.pointerId);
       render();
     }
@@ -127,6 +128,7 @@
         x: petState.windowBounds.x,
         y: petState.windowBounds.y
       });
+      petBridge.setDraggingState({ dragging: false });
       petState.drag = null;
       if (elements.pet.hasPointerCapture(event.pointerId)) {
         elements.pet.releasePointerCapture(event.pointerId);

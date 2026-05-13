@@ -73,22 +73,15 @@ async function readSelectedPet() {
   }
 }
 
-async function readFocusSound() {
-  try {
-    const preferredPath = "D:\\TickTick\\pomo.wav";
-    const soundBuffer = await fsp.readFile(preferredPath);
-    return "data:audio/wav;base64," + soundBuffer.toString("base64");
-  } catch (_error) {
-    return null;
-  }
-}
-
 contextBridge.exposeInMainWorld("petBridge", {
   showContextMenu: function (payload) {
     return ipcRenderer.invoke("pet:showContextMenu", payload);
   },
   setPosition: function (position) {
     ipcRenderer.send("pet:setPosition", position);
+  },
+  setDraggingState: function (payload) {
+    ipcRenderer.send("pet:setDraggingState", payload);
   },
   beginNativeDrag: function () {
     return ipcRenderer.invoke("pet:beginNativeDrag");
@@ -104,6 +97,9 @@ contextBridge.exposeInMainWorld("petBridge", {
   },
   closeFocusDetail: function () {
     return ipcRenderer.invoke("focus:closeDetail");
+  },
+  selectFocusSound: function () {
+    return ipcRenderer.invoke("focus:selectSound");
   },
   getBounds: function () {
     return ipcRenderer.invoke("pet:getBounds");
@@ -171,6 +167,6 @@ contextBridge.exposeInMainWorld("petBridge", {
     return readSelectedPet();
   },
   readFocusSound: function () {
-    return readFocusSound();
+    return ipcRenderer.invoke("focus:readSound");
   }
 });

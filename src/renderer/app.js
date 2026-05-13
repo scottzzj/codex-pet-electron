@@ -30,6 +30,13 @@
     onClosePet: function () {
       petBridge.closeWindow();
     },
+    onChangeFocusSound: function () {
+      Promise.resolve(petBridge.selectFocusSound()).then(function (soundDataUrl) {
+        focusModule.setFocusSoundDataUrl(soundDataUrl);
+      }).catch(function () {
+        return null;
+      });
+    },
     onOpenFocusDetail: function () {
       focusModule.openFocusDetail();
     },

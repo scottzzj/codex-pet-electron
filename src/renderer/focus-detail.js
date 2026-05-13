@@ -2,7 +2,6 @@
   const elements = {
     title: document.getElementById("focus-title"),
     timer: document.getElementById("focus-timer"),
-    status: document.getElementById("focus-status"),
     actions: document.getElementById("focus-actions"),
     close: document.getElementById("focus-close")
   };
@@ -80,7 +79,6 @@
 
     elements.title.textContent = detailState.title || "专注计时";
     elements.timer.textContent = detailState.timerText || "00:00";
-    elements.status.textContent = detailState.statusText || "未开始";
     renderActions();
   }
 

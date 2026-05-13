@@ -1,12 +1,14 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { app, BrowserWindow, ipcMain, Menu, screen } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, Menu, screen } = require("electron");
 const koffi = require("koffi");
 
 let petWindow = null;
 let focusDetailWindow = null;
 let focusDetailState = null;
+let isPetDragging = false;
+let isFixingFocusDetailBounds = false;
 let nativeDragState = {
   entered: false,
   exited: false
@@ -40,6 +42,14 @@ const COLLAPSED_WINDOW_HEIGHT = 320;
 const EXPANDED_WINDOW_HEIGHT = 520;
 const DETAIL_WINDOW_WIDTH = 320;
 const DETAIL_WINDOW_HEIGHT = 272;
+const DEFAULT_FOCUS_SOUND_DIR = path.join(__dirname, "..", "assets", "sounds");
+const DEFAULT_FOCUS_SOUND_NAMES = [
+  "focus-default.wav",
+  "focus-default.mp3",
+  "focus-default.ogg",
+  "focus-default.m4a"
+];
+const SETTINGS_FILE_NAME = "pet-settings.json";
 const WM_NCLBUTTONDOWN = 0x00A1;
 const WM_SYSCOMMAND = 0x0112;
 const WM_ENTERSIZEMOVE = 0x0231;
@@ -55,6 +65,76 @@ function readCodexGlobalState() {
   try {
     const statePath = path.join(os.homedir(), ".codex", ".codex-global-state.json");
     return JSON.parse(fs.readFileSync(statePath, "utf8"));
+  } catch (_error) {
+    return null;
+  }
+}
+
+function getSettingsPath() {
+  return path.join(app.getPath("userData"), SETTINGS_FILE_NAME);
+}
+
+function readAppSettings() {
+  try {
+    return JSON.parse(fs.readFileSync(getSettingsPath(), "utf8"));
+  } catch (_error) {
+    return {};
+  }
+}
+
+function writeAppSettings(settings) {
+  try {
+    fs.mkdirSync(path.dirname(getSettingsPath()), { recursive: true });
+    fs.writeFileSync(getSettingsPath(), JSON.stringify(settings, null, 2), "utf8");
+  } catch (_error) {
+    return;
+  }
+}
+
+function setCustomFocusSoundPath(soundPath) {
+  const nextSettings = readAppSettings();
+
+  if (typeof soundPath === "string" && soundPath.length > 0) {
+    nextSettings.customFocusSoundPath = soundPath;
+  } else {
+    delete nextSettings.customFocusSoundPath;
+  }
+
+  writeAppSettings(nextSettings);
+}
+
+function resolveFocusSoundPath() {
+  const settings = readAppSettings();
+  const customPath = settings.customFocusSoundPath;
+
+  if (typeof customPath === "string" && customPath.length > 0 && fs.existsSync(customPath)) {
+    return customPath;
+  }
+
+  for (const fileName of DEFAULT_FOCUS_SOUND_NAMES) {
+    const candidatePath = path.join(DEFAULT_FOCUS_SOUND_DIR, fileName);
+    if (fs.existsSync(candidatePath)) {
+      return candidatePath;
+    }
+  }
+
+  return null;
+}
+
+function readFocusSoundDataUrl() {
+  try {
+    const focusSoundPath = resolveFocusSoundPath();
+    if (!focusSoundPath) {
+      return null;
+    }
+
+    const soundBuffer = fs.readFileSync(focusSoundPath);
+    const soundExt = path.extname(focusSoundPath).slice(1).toLowerCase() || "wav";
+    const mimeType = soundExt === "mp3"
+      ? "audio/mpeg"
+      : (soundExt === "ogg" ? "audio/ogg" : (soundExt === "m4a" ? "audio/mp4" : "audio/wav"));
+
+    return "data:" + mimeType + ";base64," + soundBuffer.toString("base64");
   } catch (_error) {
     return null;
   }
@@ -137,19 +217,20 @@ function createPetWindow() {
   petWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
 
   petWindow.on("move", function () {
-    syncFocusDetailPosition();
     if (petWindow && !petWindow.isDestroyed()) {
       petWindow.webContents.send("pet-window-bounds-changed", petWindow.getBounds());
     }
   });
 
   petWindow.hookWindowMessage(WM_ENTERSIZEMOVE, function () {
+    isPetDragging = true;
     nativeDragState.entered = true;
     if (petWindow && !petWindow.isDestroyed()) {
       petWindow.webContents.send("pet-native-drag-state", { dragging: true });
     }
   });
   petWindow.hookWindowMessage(WM_EXITSIZEMOVE, function () {
+    isPetDragging = false;
     nativeDragState.exited = true;
     if (petWindow && !petWindow.isDestroyed()) {
       petWindow.webContents.send("pet-native-drag-state", { dragging: false });
@@ -251,13 +332,31 @@ function resolveFocusDetailBounds() {
   };
 }
 
-function syncFocusDetailPosition() {
-  if (!focusDetailWindow || focusDetailWindow.isDestroyed()) {
+function enforceFocusDetailSize() {
+  if (
+    isFixingFocusDetailBounds ||
+    !focusDetailWindow ||
+    focusDetailWindow.isDestroyed()
+  ) {
     return;
   }
 
-  const bounds = resolveFocusDetailBounds();
-  focusDetailWindow.setPosition(bounds.x, bounds.y);
+  const currentBounds = focusDetailWindow.getBounds();
+  if (
+    currentBounds.width === DETAIL_WINDOW_WIDTH &&
+    currentBounds.height === DETAIL_WINDOW_HEIGHT
+  ) {
+    return;
+  }
+
+  isFixingFocusDetailBounds = true;
+  focusDetailWindow.setBounds({
+    x: currentBounds.x,
+    y: currentBounds.y,
+    width: DETAIL_WINDOW_WIDTH,
+    height: DETAIL_WINDOW_HEIGHT
+  });
+  isFixingFocusDetailBounds = false;
 }
 
 function beginNativePetDrag() {
@@ -348,8 +447,13 @@ function openFocusDetailWindow(payload) {
       }
     });
 
+    focusDetailWindow.setMinimumSize(DETAIL_WINDOW_WIDTH, DETAIL_WINDOW_HEIGHT);
+    focusDetailWindow.setMaximumSize(DETAIL_WINDOW_WIDTH, DETAIL_WINDOW_HEIGHT);
     focusDetailWindow.loadFile(path.join(__dirname, "renderer", "focus-detail.html"));
     focusDetailWindow.webContents.on("did-finish-load", syncFocusDetailState);
+    focusDetailWindow.on("resize", function () {
+      enforceFocusDetailSize();
+    });
     focusDetailWindow.on("closed", function () {
       focusDetailWindow = null;
       if (petWindow && !petWindow.isDestroyed()) {
@@ -357,7 +461,8 @@ function openFocusDetailWindow(payload) {
       }
     });
   } else {
-    focusDetailWindow.setBounds(bounds);
+    focusDetailWindow.setSize(bounds.width, bounds.height);
+    focusDetailWindow.setPosition(bounds.x, bounds.y);
     syncFocusDetailState();
   }
 
@@ -444,14 +549,14 @@ ipcMain.on("pet:setPosition", function (_event, position) {
     clamped.x,
     clamped.y
   );
-
-  if (focusDetailWindow && !focusDetailWindow.isDestroyed()) {
-    syncFocusDetailPosition();
-  }
 });
 
 ipcMain.handle("pet:beginNativeDrag", function () {
   return beginNativePetDrag();
+});
+
+ipcMain.on("pet:setDraggingState", function (_event, payload) {
+  isPetDragging = Boolean(payload && payload.dragging);
 });
 
 ipcMain.handle("pet:setExpanded", function (_event, payload) {
@@ -481,10 +586,6 @@ ipcMain.handle("pet:setExpanded", function (_event, payload) {
     height: targetHeight
   });
 
-  if (focusDetailWindow && !focusDetailWindow.isDestroyed()) {
-    syncFocusDetailPosition();
-  }
-
   return petWindow.getBounds();
 });
 
@@ -506,6 +607,32 @@ ipcMain.handle("focus:closeDetail", function () {
   closeFocusDetailWindow();
   return true;
 });
+
+ipcMain.handle("focus:readSound", function () {
+  return readFocusSoundDataUrl();
+});
+
+ipcMain.handle("focus:selectSound", async function () {
+  if (!petWindow || petWindow.isDestroyed()) {
+    return null;
+  }
+
+  const result = await dialog.showOpenDialog(petWindow, {
+    title: "选择提示音",
+    properties: ["openFile"],
+    filters: [
+      { name: "音频文件", extensions: ["wav", "mp3", "ogg", "m4a"] }
+    ]
+  });
+
+  if (result.canceled || !Array.isArray(result.filePaths) || result.filePaths.length === 0) {
+    return null;
+  }
+
+  setCustomFocusSoundPath(result.filePaths[0]);
+  return readFocusSoundDataUrl();
+});
+
 
 ipcMain.on("focus:detailAction", function (_event, payload) {
   if (payload && payload.id === "focus-detail-close") {
