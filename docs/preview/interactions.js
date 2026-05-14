@@ -45,24 +45,16 @@
         return;
       }
 
-      const cachedBounds = petState.windowBounds;
-      if (!event.altKey) {
-        window.clearTimeout(petState.hoverTimer);
-        petState.state = "jumping";
-        petState.lastAnimationKey = "";
-        render();
-        const nativeStarted = await petBridge.beginNativeDrag().catch(function () {
-          return false;
-        });
-        if (nativeStarted) {
-          return;
-        }
-      }
-
       if (event.buttons !== 1) {
         return;
       }
 
+      window.clearTimeout(petState.hoverTimer);
+      petState.state = "jumping";
+      petState.lastAnimationKey = "";
+      render();
+
+      const cachedBounds = petState.windowBounds;
       if (cachedBounds) {
         armDrag(event, cachedBounds);
         return;
@@ -176,11 +168,55 @@
       });
     }
 
+    function startActivityListInteraction() {
+      petState.isInteractingWithActivityList = true;
+    }
+
+    function endActivityListInteraction() {
+      if (!petState.isInteractingWithActivityList) {
+        return;
+      }
+
+      petState.isInteractingWithActivityList = false;
+      render();
+      handleActivityListScroll();
+    }
+
+    function handleActivityListWheel(event) {
+      if (!elements.activityList) {
+        return;
+      }
+
+      const maxScrollTop = elements.activityList.scrollHeight - elements.activityList.clientHeight;
+      if (maxScrollTop <= 0) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      startActivityListInteraction();
+
+      const nextScrollTop = Math.max(
+        0,
+        Math.min(maxScrollTop, elements.activityList.scrollTop + event.deltaY)
+      );
+
+      elements.activityList.scrollTop = nextScrollTop;
+      handleActivityListScroll();
+      window.clearTimeout(petState.activityListInteractionTimer);
+      petState.activityListInteractionTimer = window.setTimeout(endActivityListInteraction, 120);
+    }
+
     function bindEvents() {
       elements.badge.addEventListener("click", toggleTray);
       elements.trayToggle.addEventListener("click", toggleTray);
       elements.latestButton.addEventListener("click", scrollToLatest);
       elements.activityList.addEventListener("scroll", handleActivityListScroll);
+      elements.activityList.addEventListener("wheel", handleActivityListWheel, { passive: false });
+      elements.activityList.addEventListener("pointerdown", startActivityListInteraction);
+      elements.activityList.addEventListener("pointerup", endActivityListInteraction);
+      elements.activityList.addEventListener("pointercancel", endActivityListInteraction);
+      elements.activityList.addEventListener("mouseleave", endActivityListInteraction);
       elements.pet.addEventListener("contextmenu", showMenu);
       elements.pet.addEventListener("pointerdown", beginDrag);
       elements.pet.addEventListener("pointermove", moveDrag);

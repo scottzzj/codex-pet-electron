@@ -10,13 +10,40 @@
     const onOpenFocusDetail = options.onOpenFocusDetail;
     const onStartFocus = options.onStartFocus;
     const onToggleTray = options.onToggleTray;
+    const onImportPet = options.onImportPet;
+    const onSelectPet = options.onSelectPet;
 
     function formatMinutesLabel(minutes) {
       return String(minutes) + " 分钟";
     }
 
+    function buildPetSubmenu() {
+      const items = (petState.availablePets || []).map(function (pet) {
+        const isSelected = petState.selectedPet && petState.selectedPet.key === pet.key;
+        const sourceLabel = pet.source === "local"
+          ? "本地"
+          : (pet.source === "codex" ? "Codex" : "内置");
+
+        return {
+          id: "pet-select:" + pet.key,
+          label: (isSelected ? "当前使用 " : "") + pet.displayName + "（" + sourceLabel + "）"
+        };
+      });
+
+      items.push({ type: "separator" });
+      items.push({ id: "pet-import", label: "导入 ZIP 形象包" });
+      return items;
+    }
+
     function buildMenuItems() {
       const items = [];
+
+      items.push({
+        id: "pet-switch-root",
+        label: "切换形象",
+        submenu: buildPetSubmenu()
+      });
+      items.push({ type: "separator" });
 
       if (petState.focus.status === "idle" || petState.focus.status === "completed") {
         items.push({
@@ -61,9 +88,25 @@
 
       if (payload.id === "toggle-tray") {
         onToggleTray();
-      } else if (payload.id.indexOf("focus-start-") === 0) {
+        return;
+      }
+
+      if (payload.id.indexOf("focus-start-") === 0) {
         onStartFocus(Number(payload.id.replace("focus-start-", "")));
-      } else if (payload.id === "focus-detail-open") {
+        return;
+      }
+
+      if (payload.id.indexOf("pet-select:") === 0) {
+        onSelectPet(payload.id.slice("pet-select:".length));
+        return;
+      }
+
+      if (payload.id === "pet-import") {
+        onImportPet();
+        return;
+      }
+
+      if (payload.id === "focus-detail-open") {
         onOpenFocusDetail();
       } else if (payload.id === "focus-sound-change") {
         onChangeFocusSound();

@@ -40,6 +40,20 @@
     onOpenFocusDetail: function () {
       return null;
     },
+    onImportPet: function () {
+      return null;
+    },
+    onSelectPet: function (key) {
+      Promise.resolve(petBridge.setSelectedPet(key)).then(function (pet) {
+        if (!pet) {
+          return;
+        }
+        petState.selectedPet = pet;
+        render();
+      }).catch(function () {
+        return null;
+      });
+    },
     onStartFocus: function () {
       return null;
     },
@@ -61,6 +75,18 @@
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : null;
 
+  function mergeActivities() {
+    const activities = [];
+    const focusActivity = focusModule.getFocusActivity();
+
+    if (focusActivity) {
+      activities.push(focusActivity);
+    }
+
+    Array.prototype.push.apply(activities, petState.codexActivities || []);
+    activityModule.setActivities(activities);
+  }
+
   function applyReducedMotionPreference(prefersReducedMotion) {
     if (petState.reducedMotion === prefersReducedMotion) {
       return;
@@ -72,14 +98,7 @@
   }
 
   function rebuildActivities() {
-    const activities = [];
-    const focusActivity = focusModule.getFocusActivity();
-
-    if (focusActivity) {
-      activities.push(focusActivity);
-    }
-
-    activityModule.setActivities(activities);
+    mergeActivities();
   }
 
   function handleFocusStateChanged() {
@@ -92,14 +111,21 @@
 
     const badgeTheme = constants.badgeThemeByState[petState.state] || constants.badgeThemeByState.idle;
     activityModule.renderActivities();
+    const currentChatActivity = (petState.codexActivities || []).find(function (activity) {
+      return activity && typeof activity.title === "string" && activity.title.trim().length > 0;
+    });
+    const chipText = currentChatActivity
+      ? currentChatActivity.title
+      : (petState.focus.status === "idle"
+        ? (constants.statusCopy[petState.state] || "Waiting")
+        : focusModule.getFocusStatusText());
 
     elements.tray.classList.toggle("hidden", !petState.trayOpen);
-    elements.badge.textContent = String(petState.visibleActivities.length);
+    elements.badge.textContent = String(Math.max(1, petState.visibleActivities.length));
     elements.badge.style.background = badgeTheme.bg;
     elements.badge.style.color = badgeTheme.fg;
-    elements.chip.textContent = petState.focus.status === "idle"
-      ? "\u7b49\u5f85\u4e2d"
-      : focusModule.getFocusStatusText();
+    elements.chip.textContent = chipText;
+    elements.chip.title = chipText;
     elements.chip.className = "avatar-status-chip status-" + activityModule.normalizeStatus(petState.state);
     elements.trayToggle.textContent = petState.trayOpen ? "-" : "+";
 
@@ -127,6 +153,10 @@
   }
 
   interactionModule.bindEvents();
+
+  petBridge.onMenuAction(function (payload) {
+    menuModule.handleMenuAction(payload);
+  });
 
   petBridge.onWindowBoundsChanged(function (bounds) {
     if (!bounds) {
@@ -156,6 +186,21 @@
   rebuildActivities();
   render();
   scheduleRefresh();
+
+  Promise.resolve(petBridge.listAvailablePets()).then(function (pets) {
+    petState.availablePets = Array.isArray(pets) ? pets : [];
+    render();
+  }).catch(function () {
+    return null;
+  });
+
+  Promise.resolve(petBridge.readCodexActivities()).then(function (activities) {
+    petState.codexActivities = Array.isArray(activities) ? activities : [];
+    rebuildActivities();
+    render();
+  }).catch(function () {
+    return null;
+  });
 
   Promise.resolve(petBridge.readSelectedPet()).then(function (pet) {
     if (!pet) {

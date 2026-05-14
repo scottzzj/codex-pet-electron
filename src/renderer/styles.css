@@ -22,10 +22,6 @@ body {
   font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
-body {
-  -webkit-app-region: drag;
-}
-
 button {
   font: inherit;
 }
@@ -40,6 +36,8 @@ button {
   position: relative;
   width: 100%;
   height: 100%;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .avatar-overlay-content {
@@ -48,12 +46,14 @@ button {
   top: 191px;
   width: 112px;
   height: 121px;
+  pointer-events: auto;
 }
 
 .avatar-hit-region {
   position: relative;
   width: 100%;
   height: 100%;
+  pointer-events: auto;
 }
 
 .avatar-shell {
@@ -199,6 +199,8 @@ button {
   top: 56px;
   width: var(--tray-width);
   -webkit-app-region: no-drag;
+  z-index: 40;
+  pointer-events: auto;
 }
 
 .tray-panel {
@@ -225,6 +227,16 @@ button {
   display: flex;
   justify-content: center;
   padding: 8px 8px 0;
+  min-height: 32px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 120ms ease;
+}
+
+.tray-latest-bar.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .tray-latest-button {
@@ -262,12 +274,40 @@ button {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 182px;
-  overflow: auto;
+  height: 246px;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 8px;
+  scrollbar-gutter: stable;
+  pointer-events: auto;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-app-region: no-drag;
+}
+
+.tray-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.tray-list::-webkit-scrollbar-track {
+  background: rgba(38, 50, 68, 0.08);
+  border-radius: 999px;
+}
+
+.tray-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(47, 63, 89, 0.34);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tray-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(47, 63, 89, 0.52);
+  background-clip: padding-box;
 }
 
 .tray-item {
+  min-width: 0;
   border: 1px solid rgba(46, 52, 64, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.88);
@@ -303,7 +343,11 @@ button {
 .tray-item-title {
   font-size: 14px;
   font-weight: 700;
+  line-height: 1.35;
   color: #17202d;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .tray-item-body {
@@ -311,9 +355,17 @@ button {
   color: #58667b;
   font-size: 12px;
   line-height: 1.45;
-  min-height: 32px;
-  max-height: 32px;
-  overflow: hidden;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.tray-item-title,
+.tray-item-meta {
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .tray-item-meta {
@@ -321,9 +373,12 @@ button {
   color: #7a879b;
   font-size: 11px;
   line-height: 1.3;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.hidden {
+.avatar-overlay-tray.hidden {
   display: none;
 }
 

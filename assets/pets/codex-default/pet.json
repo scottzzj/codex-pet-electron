@@ -1,0 +1,7 @@
+{
+  "id": "codex-default",
+  "displayName": "默认宠物",
+  "description": "应用内置宠物形象",
+  "spritesheetPath": "spritesheet.webp",
+  "source": "bundled"
+}

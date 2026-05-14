@@ -40,6 +40,29 @@
     onOpenFocusDetail: function () {
       focusModule.openFocusDetail();
     },
+    onImportPet: function () {
+      Promise.resolve(petBridge.importPetZip()).then(function (result) {
+        if (!result || result.success !== true || !result.pet) {
+          return;
+        }
+        petState.selectedPet = result.pet;
+        petState.availablePets = Array.isArray(result.availablePets) ? result.availablePets : petState.availablePets;
+        render();
+      }).catch(function () {
+        return null;
+      });
+    },
+    onSelectPet: function (key) {
+      Promise.resolve(petBridge.setSelectedPet(key)).then(function (pet) {
+        if (!pet) {
+          return;
+        }
+        petState.selectedPet = pet;
+        render();
+      }).catch(function () {
+        return null;
+      });
+    },
     onStartFocus: function (minutes) {
       focusModule.startFocus(minutes);
       focusModule.openFocusDetail();
@@ -62,6 +85,18 @@
     ? window.matchMedia("(prefers-reduced-motion: reduce)")
     : null;
 
+  function mergeActivities() {
+    const activities = [];
+    const focusActivity = focusModule.getFocusActivity();
+
+    if (focusActivity) {
+      activities.push(focusActivity);
+    }
+
+    Array.prototype.push.apply(activities, petState.codexActivities || []);
+    activityModule.setActivities(activities);
+  }
+
   function applyReducedMotionPreference(prefersReducedMotion) {
     if (petState.reducedMotion === prefersReducedMotion) {
       return;
@@ -73,23 +108,7 @@
   }
 
   function rebuildActivities() {
-    const activities = [];
-    const focusActivity = focusModule.getFocusActivity();
-
-    if (focusActivity) {
-      activities.push(focusActivity);
-    }
-
-    activities.push({
-      id: constants.baseActivity.id,
-      title: constants.baseActivity.title,
-      body: constants.baseActivity.body,
-      source: constants.baseActivity.source,
-      state: focusActivity ? "idle" : constants.baseActivity.state,
-      updatedAtMs: Date.now()
-    });
-
-    activityModule.setActivities(activities);
+    mergeActivities();
   }
 
   function handleFocusStateChanged() {
@@ -97,19 +116,37 @@
     render();
   }
 
+  function refreshCodexActivities() {
+    return Promise.resolve(petBridge.readCodexActivities()).then(function (activities) {
+      petState.codexActivities = Array.isArray(activities) ? activities : [];
+      rebuildActivities();
+      render();
+      return petState.codexActivities;
+    }).catch(function () {
+      return null;
+    });
+  }
+
   function render() {
     activityModule.syncActivityState();
 
     const badgeTheme = constants.badgeThemeByState[petState.state] || constants.badgeThemeByState.idle;
     activityModule.renderActivities();
+    const currentChatActivity = (petState.codexActivities || []).find(function (activity) {
+      return activity && typeof activity.title === "string" && activity.title.trim().length > 0;
+    });
+    const chipText = currentChatActivity
+      ? currentChatActivity.title
+      : (petState.focus.status === "idle"
+        ? (constants.statusCopy[petState.state] || "Waiting")
+        : focusModule.getFocusStatusText());
 
     elements.tray.classList.toggle("hidden", !petState.trayOpen);
     elements.badge.textContent = String(Math.max(1, petState.visibleActivities.length));
     elements.badge.style.background = badgeTheme.bg;
     elements.badge.style.color = badgeTheme.fg;
-    elements.chip.textContent = petState.focus.status === "idle"
-      ? (constants.statusCopy[petState.state] || "Waiting")
-      : focusModule.getFocusStatusText();
+    elements.chip.textContent = chipText;
+    elements.chip.title = chipText;
     elements.chip.className = "avatar-status-chip status-" + activityModule.normalizeStatus(petState.state);
     elements.trayToggle.textContent = petState.trayOpen ? "-" : "+";
 
@@ -162,6 +199,8 @@
           : constants.DEFAULT_LAYOUT.tray.top;
         elements.tray.style.left = Math.round(trayLeft) + "px";
         elements.tray.style.top = Math.round(trayTop) + "px";
+        elements.tray.style.width = "";
+        elements.activityList.style.height = "";
       }
     }
   }
@@ -186,6 +225,11 @@
         focusModule.updateFocusState();
       }
     }, constants.REFRESH_INTERVAL_MS);
+
+    window.clearInterval(petState.codexActivitiesTimer);
+    petState.codexActivitiesTimer = window.setInterval(function () {
+      refreshCodexActivities();
+    }, constants.CODEX_ACTIVITIES_REFRESH_INTERVAL_MS);
   }
 
   interactionModule.bindEvents();
@@ -217,19 +261,6 @@
     }
   });
 
-  petBridge.onNativeDragState(function (payload) {
-    if (!payload || payload.dragging) {
-      return;
-    }
-
-    petState.drag = null;
-    if (!petState.hovering) {
-      petState.state = petState.baseState;
-      petState.lastAnimationKey = "";
-      render();
-    }
-  });
-
   rebuildActivities();
   render();
   scheduleRefresh();
@@ -252,6 +283,15 @@
   }).catch(function () {
     return null;
   });
+
+  Promise.resolve(petBridge.listAvailablePets()).then(function (pets) {
+    petState.availablePets = Array.isArray(pets) ? pets : [];
+    render();
+  }).catch(function () {
+    return null;
+  });
+
+  refreshCodexActivities();
 
   Promise.resolve(petBridge.readSelectedPet()).then(function (pet) {
     if (!pet) {

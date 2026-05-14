@@ -8,6 +8,10 @@
 
     let bodyResizeObserver = null;
 
+    function decodeDisplayText(text) {
+      return String(text || "");
+    }
+
     function normalizeStatus(state) {
       if (state === "running-left" || state === "running-right" || state === "jumping") {
         return "running";
@@ -45,9 +49,9 @@
     function formatRelativeAge(updatedAtMs) {
       const deltaMs = Math.max(0, Date.now() - updatedAtMs);
       if (deltaMs < 60000) {
-        return "just now";
+        return "刚刚";
       }
-      return Math.floor(deltaMs / 60000) + " min ago";
+      return Math.floor(deltaMs / 60000) + " 分钟前";
     }
 
     function computeVisibleActivities() {
@@ -70,6 +74,10 @@
     }
 
     function renderActivities() {
+      if (petState.isInteractingWithActivityList) {
+        return;
+      }
+
       if (petState.visibleActivities.length === 0) {
         if (petState.lastActivitiesMarkup !== "") {
           petState.lastActivitiesMarkup = "";
@@ -81,12 +89,12 @@
       const nextMarkup = petState.visibleActivities.map(function (activity) {
         return [
           '<article class="tray-item state-', escapeHtml(normalizeStatus(activity.state)), '">',
-          '<div class="tray-item-title">', escapeHtml(activity.title), "</div>",
+          '<div class="tray-item-title">', escapeHtml(decodeDisplayText(activity.title)), "</div>",
           '<div class="tray-item-body" data-activity-body="', escapeHtml(activity.id), '">',
-          escapeHtml(activity.body),
+          escapeHtml(decodeDisplayText(activity.body)),
           "</div>",
           '<div class="tray-item-meta">',
-          escapeHtml(activity.source || "Activity"),
+          escapeHtml(decodeDisplayText(activity.source || "动态")),
           " - ",
           escapeHtml(formatRelativeAge(activity.updatedAtMs)),
           "</div>",
@@ -98,8 +106,11 @@
         return;
       }
 
+      const previousScrollTop = elements.activityList.scrollTop;
+      const wasNearTop = previousScrollTop <= constants.SCROLL_EDGE_TOLERANCE;
       petState.lastActivitiesMarkup = nextMarkup;
       elements.activityList.innerHTML = nextMarkup;
+      elements.activityList.scrollTop = wasNearTop ? 0 : previousScrollTop;
     }
 
     function syncActivityState() {
@@ -111,8 +122,22 @@
     }
 
     function syncLatestBar() {
-      const isAtLatest = elements.activityList.scrollTop <= constants.SCROLL_EDGE_TOLERANCE;
-      elements.latestBar.classList.toggle("hidden", !petState.trayOpen || isAtLatest);
+      const scrollTop = elements.activityList.scrollTop;
+      const hiddenThreshold = constants.SCROLL_EDGE_TOLERANCE;
+      const visibleThreshold = hiddenThreshold + 12;
+      const isCurrentlyHidden = elements.latestBar.classList.contains("hidden");
+
+      if (!petState.trayOpen) {
+        elements.latestBar.classList.add("hidden");
+        return;
+      }
+
+      if (isCurrentlyHidden) {
+        elements.latestBar.classList.toggle("hidden", scrollTop < visibleThreshold);
+        return;
+      }
+
+      elements.latestBar.classList.toggle("hidden", scrollTop <= hiddenThreshold);
     }
 
     function scheduleOverflowMeasurement() {

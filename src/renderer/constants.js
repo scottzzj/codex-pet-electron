@@ -19,6 +19,7 @@
     WINDOW_WIDTH: 356,
     WINDOW_HEIGHT: 320,
     REFRESH_INTERVAL_MS: 1000,
+    CODEX_ACTIVITIES_REFRESH_INTERVAL_MS: 5000,
     SCROLL_EDGE_TOLERANCE: 2,
     FOCUS_MAX_PAUSES: 3,
     FOCUS_PRESETS: [5, 10, 30, 45, 60],
@@ -78,13 +79,6 @@
       failed: 3600 * 1000,
       waiting: 1440 * 60 * 1000,
       review: 10080 * 60 * 1000
-    },
-    baseActivity: {
-      id: "conversation",
-      title: "当前会话",
-      body: "桌宠当前绑定到本地会话，会同步展示这一条活跃会话的状态。",
-      source: "本地会话",
-      state: "running"
     }
   };
 })();

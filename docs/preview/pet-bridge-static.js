@@ -3,8 +3,7 @@
     menuAction: [],
     focusDetailAction: [],
     focusDetailState: [],
-    windowBoundsChanged: [],
-    nativeDragState: []
+    windowBoundsChanged: []
   };
 
   let bounds = {
@@ -66,11 +65,7 @@
       return null;
     },
     setDraggingState: function (payload) {
-      emit(listeners.nativeDragState, payload);
       return null;
-    },
-    beginNativeDrag: function () {
-      return resolved(false);
     },
     setExpanded: function () {
       return resolved(bounds);
@@ -85,6 +80,57 @@
       return resolved(true);
     },
     selectFocusSound: function () {
+      return resolved(null);
+    },
+    listAvailablePets: function () {
+      return resolved([
+        {
+          key: "preview:codex-puppy",
+          id: "codex-puppy",
+          displayName: "Codex Puppy",
+          description: "Static preview pet",
+          source: "preview"
+        }
+      ]);
+    },
+    readCodexActivities: function () {
+      return resolved([
+        {
+          id: "preview-chat-1",
+          title: "添加 Codex Pet 右键操作",
+          body: "这是静态预览页中的最新动态示例，用来模拟真实会话的标题与摘要展示效果。",
+          source: "demo",
+          state: "running",
+          updatedAtMs: Date.now() - 20 * 1000
+        },
+        {
+          id: "preview-chat-2",
+          title: "TickTick 专注入口优化",
+          body: "右键菜单支持开始专注、查看详情，并保持浮窗位置与主宠物解耦。",
+          source: "demo",
+          state: "review",
+          updatedAtMs: Date.now() - 4 * 60 * 1000
+        },
+        {
+          id: "preview-chat-3",
+          title: "宠物形象 ZIP 导入",
+          body: "支持直接导入宠物压缩包，并把已选形象保存到本地配置。",
+          source: "demo",
+          state: "idle",
+          updatedAtMs: Date.now() - 18 * 60 * 1000
+        }
+      ]);
+    },
+    setSelectedPet: function () {
+      return resolved({
+        key: "preview:codex-puppy",
+        id: "codex-puppy",
+        displayName: "Puppy",
+        description: "Static preview pet",
+        spritesheetDataUrl: "./preview/codex-puppy.webp"
+      });
+    },
+    importPetZip: function () {
       return resolved(null);
     },
     getBounds: function () {
@@ -102,9 +148,6 @@
     },
     onWindowBoundsChanged: function (handler) {
       return subscribe(listeners.windowBoundsChanged, handler);
-    },
-    onNativeDragState: function (handler) {
-      return subscribe(listeners.nativeDragState, handler);
     },
     sendFocusDetailAction: noop,
     readCodexState: function () {
