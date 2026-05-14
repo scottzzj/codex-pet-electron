@@ -1,6 +1,6 @@
 {
   "name": "codex-pet-electron",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Standalone desktop pet inspired by Codex Pet",
   "main": "src/main.js",
   "author": "OpenAI Codex",
